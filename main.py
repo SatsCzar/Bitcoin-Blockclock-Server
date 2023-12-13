@@ -41,11 +41,11 @@ def get_coinlib_price(currency):
 
         price_data = {
             "currency": currency,
-            "price": round(float(coinlib["price"]), 2),
-            "delta_1h": round(float(coinlib["delta_1h"]), 2),
-            "delta_24h": round(float(coinlib["delta_24h"]), 2),
-            "delta_7d": round(float(coinlib["delta_7d"]), 2),
-            "delta_30d": round(float(coinlib["delta_30d"]), 2),
+            "price": round(float(coinlib["price"].replace(',', '.')), 2),
+            "delta_1h": round(float(coinlib["delta_1h"].replace(',', '.')), 2),
+            "delta_24h": round(float(coinlib["delta_24h"].replace(',', '.')), 2),
+            "delta_7d": round(float(coinlib["delta_7d"].replace(',', '.')), 2),
+            "delta_30d": round(float(coinlib["delta_30d"].replace(',', '.')), 2),
         }
 
         return price_data
