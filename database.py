@@ -49,7 +49,6 @@ class BitcoinPriceDatabase:
         """, (currency,))
         row = cursor.fetchone()
         if row is not None:
-
             return {
                 'currency': row[0],
                 'price': row[1],
@@ -59,5 +58,5 @@ class BitcoinPriceDatabase:
                 'delta_30d': row[5],
                 'timestamp': row[6]
             }
-        else:
-            return None
+
+        return None

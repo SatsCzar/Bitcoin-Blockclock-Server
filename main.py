@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Response
 from database import BitcoinPriceDatabase
 import requests
 import time
@@ -13,23 +13,36 @@ def health():
 
 
 @app.get("/bitcoin/{currency}")
-def get_bitcoin_price(currency):
-    price_data = bitcoinDatabase.get_bitcoin_price(currency)
+def get_bitcoin_price(currency, response: Response):
+    try:
+        price_data = bitcoinDatabase.get_bitcoin_price(currency)
 
-    if(price_data != None):
-        current_time = time.time()
+        if(price_data is not None):
+            current_time = time.time()
 
-        if (current_time - price_data["timestamp"] > 300):
+            if (current_time - price_data["timestamp"] > 300):
+                price_data = get_coinlib_price(currency)
+                
+                if(price_data is None):
+                    response.status_code = 500
+                    return {"detail": "Error when trying to get price"}
+
+                bitcoinDatabase.insert_bitcoin_price(price_data)
+
+        if(price_data is None):
             price_data = get_coinlib_price(currency)
+            
+            if(price_data is None):
+                response.status_code = 500
+                return {"detail": "Error when trying to get price"}
 
             bitcoinDatabase.insert_bitcoin_price(price_data)
 
-    if(price_data == None):
-        price_data = get_coinlib_price(currency)
+        return price_data
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
-        bitcoinDatabase.insert_bitcoin_price(price_data)
-
-    return price_data
 
 
 def get_coinlib_price(currency):
@@ -38,6 +51,7 @@ def get_coinlib_price(currency):
         f"https://coinlib.io/api/v1/coin?key={api_key}&pref={currency}&symbol=BTC")
     if(request.status_code == 200):
         coinlib = request.json()
+        print(coinlib)
 
         price_data = {
             "currency": currency,
@@ -47,5 +61,9 @@ def get_coinlib_price(currency):
             "delta_7d": round(float(coinlib["delta_7d"].replace(',', '.')), 2),
             "delta_30d": round(float(coinlib["delta_30d"].replace(',', '.')), 2),
         }
+        
+        print(price_data)
 
         return price_data
+    
+    return None
